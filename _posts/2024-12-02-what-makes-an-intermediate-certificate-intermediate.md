@@ -10,13 +10,13 @@ tags: [x509, ca, signing]     # TAG names should always be lowercase
 Having spent a little time creating dummy CAs, signing certificates and viewing lots of `openssl x509 -text` output, I came to the realisation that I wasn't entirely clear which x509 certificate attributes I should expect to see which denote the purpose of a certificate.
 
 ## Questions to explore
-
-To further understanding, I'd like to explore the folowing quesitons and where applicable demonstrate the answers:
+3
+To further understanding, I'd like to explore the following questions and where applicable demonstrate the answers:
 
 - What are the observable differences between root, intermediate, and *end-entity* certificates
 - The x509v3 extensions appear to restrict certificate usage, what happened before these extensions were added?
 - Fundamentally, can I sign any certificate with any other e.g. asking openssl to ignore these v3 extensions?  
-- Is enforcement ultaimtely a responsibility of the validating party to ensure that a non-signing certificate has not been used in a chain?
+- Is enforcement ultimately a responsibility of the validating party to ensure that a non-signing certificate has not been used in a chain?
 - How do different clients behave when attempting to validate a broken certificate chain 
 
 
@@ -29,6 +29,21 @@ $ echo "GET /" | \
 openssl s_client -showcerts -connect www.wikipedia.com:443 -verify_return_error  2>&1 | \
 awk '/^\s+[0-9]/,/\s+v:/ {print }'
 ```
+
+<details>
+<summary>
+  
+Click to expand
+</summary>
+<p>
+
+```text
+  Code here
+```
+</p>
+</details>
+
+
 
 This returns:
 
@@ -55,7 +70,7 @@ $ cat /etc/ssl/certs/ISRG_Root_X1.pem | openssl x509 -text -noout | egrep 'Issue
         Subject: C = US, O = Internet Security Research Group, CN = ISRG Root X1
 ```
 
-Clearly there is a cryptographic mechanism of signing that makes the **trust** in all this hang together, but the hierarchy is reflected in the chain of subject and issuer - joining these 2 outputs together demonstrates one answer to the first question from above - What are the observable differences between root, intermediate, and *end-entity* certificates:
+Clearly there is a cryptographic mechanism of signing that makes the **trust** in all this hang together, but the hierarchy is reflected in the chain of subject and issuer - joining these 2 outputs together demonstrates one answer to the first question from above - What are the observable differences between *end-entity*, intermediate and root certificates:
 
 ```text
 * end entity/subject
