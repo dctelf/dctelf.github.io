@@ -7,7 +7,7 @@ tags: [x509, ca, signing]     # TAG names should always be lowercase
 
 # Starting point
 
-Having spent a little time creating dummy CAs, signing certificates and viewing lots of `openssl x509 -text` output, I came to the realisation that I wasn't entirely clear which x509 certificate attributes I should expect to see which denote the purpose of a certificate.
+Having spent a little time creating dummy CAs, signing certificates and viewing lots of `openssl x509 -text` output, I came to the realisation that I wasn't entirely clear which x509 certificate attributes I should expect to see that denote the purpose of a certificate.
 
 ## Questions to explore
 
