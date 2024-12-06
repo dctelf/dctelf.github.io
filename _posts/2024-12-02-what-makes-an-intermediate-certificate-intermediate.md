@@ -10,17 +10,19 @@ tags: [x509, ca, signing]     # TAG names should always be lowercase
 Having spent a little time creating dummy CAs, signing certificates and viewing lots of `openssl x509 -text` output, I came to the realisation that I wasn't entirely clear which x509 certificate attributes I should expect to see which denote the purpose of a certificate.
 
 ## Questions to explore
-3
+
 To further understanding, I'd like to explore the following questions and where applicable demonstrate the answers:
 
 - What are the observable differences between root, intermediate, and *end-entity* certificates
 - The x509v3 extensions appear to restrict certificate usage, what happened before these extensions were added?
-- Fundamentally, can I sign any certificate with any other e.g. asking openssl to ignore these v3 extensions?  
+- Can I sign a certificate with another that's not intended to be a root/intermediate e.g. asking openssl to ignore these v3 extensions?
 - Is enforcement ultimately a responsibility of the validating party to ensure that a non-signing certificate has not been used in a chain?
 - How do different clients behave when attempting to validate a broken certificate chain 
 
 
 ## Certificate differences
+
+### Subject and issuer certificate fields
 
 Let's use wikipedia.com and look at the certificate chain it presents with `openssl s_client` (with a bit of awk to extract the relevant lines for the presented certificate chain, up to 9 certificates, rarely see more than 3 or 4 in most scenarios):
 
@@ -32,7 +34,8 @@ awk '/^\s+[0-9]/,/\s+v:/ {print }'
 
 <details markdown="1">
 <summary>
-Full output without awk
+<i>Expand for full openssl s_client output</i>
+
 </summary>
 
 ```text
@@ -180,3 +183,62 @@ s:C = US, O = Internet Security Research Group, CN = ISRG Root X1
 i:C = US, O = Internet Security Research Group, CN = ISRG Root X1
 
 ```
+
+### Extension fields
+
+It also appears that the x509 v3 extensions on the certificate state what a certificate is allowed to be used for.
+
+I manually copied the entire certificate contents for both the end entity and the intermediate (the sections between "-----BEGIN CERTIFICATE-----" and "-----END CERTIFICATE-----" in the `openssl s_client` output) into files named *end-entity* and *intermediate* for this exercise:
+
+The end entity cert;
+```bash
+$ cat end-entity | openssl x509 -noout -ext keyUsage,extendedKeyUsage,basicConstraints
+X509v3 Key Usage: critical
+    Digital Signature
+X509v3 Extended Key Usage:
+    TLS Web Server Authentication, TLS Web Client Authentication
+X509v3 Basic Constraints: critical
+    CA:FALSE
+```
+
+The intermediate cert;
+```bash
+$ cat intermediate | openssl x509 -noout -ext keyUsage,extendedKeyUsage,basicConstraints
+X509v3 Key Usage: critical
+    Digital Signature, Certificate Sign, CRL Sign
+X509v3 Extended Key Usage:
+    TLS Web Client Authentication, TLS Web Server Authentication
+X509v3 Basic Constraints: critical
+    CA:TRUE, pathlen:0
+```
+
+  And the root;
+  ```bash
+$ cat /etc/ssl/certs/ISRG_Root_X1.pem | \
+  openssl x509 -noout -ext keyUsage,extendedKeyUsage,basicConstraints
+X509v3 Key Usage: critical
+    Certificate Sign, CRL Sign
+X509v3 Basic Constraints: critical
+    CA:TRUE
+```
+
+This highlights the other observable difference between root, intermediate and end entity certificates:
+
+- Root and intermediate certs will have the CA boolean set to true in the basicConstraints field, and Certificate Sign set in the Key Usage field
+- Intermediate certificates may have a pathlen value set in the basicConstraints field denoting whether the certificate should be used to sign intermediates or not
+- End-entity certificates will have the CA boolean set to false for basicConstraints, and will not have Certificate Sign set in the keyUsage field
+
+The full and authoritative details of these (and all the other) certificate fields is contained within [rfc5280](https://datatracker.ietf.org/doc/html/rfc5280)
+
+> An important concept here - certificate authorities clearly should conform to these rules to maintain their status (and it appears standards/practice conformity is audited through [CABF](https://cabforum.org/about/information/auditors-and-assessors/audit-criteria/)).<br><br>However, ultimately the client (browser etc.) **must** ensure that the certificate chain they are validating maintains these properties as a line of defence against non-conformity from CAs for whatever reason.<br><br>We will go into this in a bit more detail later in this post, but this BlackHat presentation from the early 2000s ([PDF](https://www.blackhat.com/presentations/bh-dc-09/Marlinspike/BlackHat-DC-09-Marlinspike-Defeating-SSL.pdf) and [video](https://www.youtube.com/watch?v=MFol6IMbZ7Y)) touch on, in the early sections of the presentation, issues at the time emerging from clients not verifying the integrity of the extensions in the chain.
+{: .prompt-info }
+
+## what happened before these extensions were added?
+
+This is really hard to find out - I've spent a good few hours searching for anything that outlines the historic approach (prior to the v3 extensions) that stopped anyone who possesses a public CA signed cert from using their private key to sign a subordinate cert, effectively passing it off as an intermediate.
+
+Given that x509 V1 & V2 look to (almost) pre-date the advent of any significant use of SSL/TLS through the early years of the 2000s, it may be that this issue wasn't considered as significant, with x509 V3 extensions being in place as SSL/TLS became prevalent.
+
+## Can I sign a certificate with another that's not intended to be a root/intermediate
+
+To do this, I'll need to convince openssl to ignore the basicConstraints field as part of signing....
