@@ -13,7 +13,7 @@ Having spent a little time creating dummy CAs, signing certificates and viewing 
 
 To further understanding, I'd like to explore the following questions and where applicable demonstrate the answers:
 
-- What are the observable differences between root, intermediate, and *end-entity* certificates
+- What are the observable differences between root, intermediate, and end-entity certificates
 - The x509v3 extensions appear to restrict certificate usage, what happened before these extensions were added?
 - Can I sign a certificate with another that's not intended to be a root/intermediate e.g. asking openssl to ignore these v3 extensions?
 - Is enforcement ultimately a responsibility of the validating party to ensure that a non-signing certificate has not been used in a chain?
@@ -157,7 +157,7 @@ This returns:
 
 Core observation is that the issuer of the end-entity/service certificate is the subject of the next certificate up in the chain (and so on).  This subject -> issuer chain extends all the way to the root certificate in the trust store of the client.
 
-From a root certificate perspective, the way `openssl s_client` displays this isn't intuitive (it only displays the certificate bundle presented by the service, but not the root), additionally I have a suspicion that openssl is always using my machines trust store and validating the full chain, so there is no easy way to see the difference between a chain that isn't validated against a root vs. one that is with openssl.
+From a root certificate perspective, the way `openssl s_client` displays this isn't intuitive (it only displays the certificate bundle presented by the service, but not the root), additionally I have a suspicion that openssl is always using my machines trust store and validating the full chain, so there is no easy way to see the difference between a chain that isn't validated against a root vs. one that is, with openssl.
 
 To show the similar fields from the matching root;
 
@@ -167,7 +167,7 @@ $ cat /etc/ssl/certs/ISRG_Root_X1.pem | openssl x509 -text -noout | egrep 'Issue
         Subject: C = US, O = Internet Security Research Group, CN = ISRG Root X1
 ```
 
-Clearly there is a cryptographic mechanism of signing that makes the **trust** in all this hang together, but the hierarchy is reflected in the chain of subject and issuer - joining these 2 outputs together demonstrates one answer to the first question from above - What are the observable differences between *end-entity*, intermediate and root certificates:
+Clearly there is a cryptographic mechanism of signing that makes the **trust** in all this hang together, but the hierarchy is reflected in the chain of subject and issuer - joining these 2 outputs together demonstrates one answer to the first question from above - What are the observable differences between end-entity, intermediate and root certificates:
 
 ```text
 * end entity/subject
@@ -235,10 +235,12 @@ The full and authoritative details of these (and all the other) certificate fiel
 
 ## what happened before these extensions were added?
 
-This is really hard to find out - I've spent a good few hours searching for anything that outlines the historic approach (prior to the v3 extensions) that stopped anyone who possesses a public CA signed cert from using their private key to sign a subordinate cert, effectively passing it off as an intermediate.
+This is really hard to find out - I've spent a good few hours searching for anything that outlines the historic approach (prior to the v3 extensions) that stopped anyone who possesses a public CA signed cert from using their private key to sign a subordinate cert, effectively passing their CA signed certificate off as an intermediate.
 
-Given that x509 V1 & V2 look to (almost) pre-date the advent of any significant use of SSL/TLS through the early years of the 2000s, it may be that this issue wasn't considered as significant, with x509 V3 extensions being in place as SSL/TLS became prevalent.  Either way, I can't find a definitive answer, but technically this appears to be an issue resolved with v3 certs.
+Given that x509 V1 & V2 look to (almost) pre-date the advent of any significant use of SSL/TLS through the early years of the 2000s, it may be that this issue wasn't considered significant, with x509 V3 extensions being in place as SSL/TLS became prevalent.  Either way, I can't find a definitive answer, but this appears to be an issue resolved with v3 certs.
 
 ## Can I sign a certificate with another that's not intended to be a root/intermediate
 
-To do this, I'll need to convince openssl to ignore the basicConstraints field as part of signing....
+To do this, I'll need to convince openssl to ignore the basicConstraints field as part of signing.  I'll start off by creating a dummy CA using the openssl default config.
+
+```
