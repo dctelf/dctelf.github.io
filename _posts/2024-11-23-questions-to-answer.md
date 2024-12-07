@@ -12,7 +12,7 @@ At some stage, I'll cross reference these as some sort of index to other posts:
 
 - **CAs and certs**
   - [ ] What makes an intermediate certificate intermediate?
-    - [ ] What are the observable differences between root, intermediate, and *end-entity* certificates?
+    - [ ] What are the observable differences between root, intermediate, and end-entity certificates?
     - [ ] The x509v3 extensions appear to restrict certificate usage, what happened before these extensions were added?
     - [ ] Can I sign any certificate with any other e.g. asking openssl to ignore these v3 extensions?
     - [ ] Is enforcement ultimately a responsibility of the validating party to ensure that a non-signing certificate has not been used in a chain?
