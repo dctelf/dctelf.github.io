@@ -673,7 +673,8 @@ There may be other features of the public PKI architecture which may also play a
 Trying openssl s_server/s_client first... Starting a service with s_server:
 
 ```bash
-$ openssl s_server -key next-end-entity.key -cert next-end-entity.pem -cert_chain end-entity.pem -accept 4433 -www
+$ openssl s_server -key next-end-entity.key -cert next-end-entity.pem \
+  -cert_chain end-entity.pem -accept 4433 -www
 Using default temp DH parameters
 ACCEPT
 
@@ -682,7 +683,8 @@ ACCEPT
 Then connecting with s_client and finding the verification errors...
 
 ```bash
-$ echo "GET /" | openssl s_client -connect localhost:4433 -CAfile dummyCA.pem 2>&1 | egrep '^verify error:|^Verification error'
+$ echo "GET /" | openssl s_client -connect localhost:4433 -CAfile dummyCA.pem 2>&1 | \
+  egrep '^verify error:|^Verification error'
 verify error:num=79:invalid CA certificate
 verify error:num=26:unsuitable certificate purpose
 verify error:num=32:key usage does not include certificate signing
@@ -768,7 +770,8 @@ Next, I'll  sign this certificate using my CA signed cert as the CA - I'll use t
 
 ```bash
 $ openssl x509 -req -in next-end-entity2.csr -CA end-entity.pem -CAkey end-entity.key \
-  -CAcreateserial -out next-end-entity2.pem -days 364 -sha256 -extfile v3.ext -copy_extensions copy
+  -CAcreateserial -out next-end-entity2.pem -days 364 -sha256 \
+  -extfile v3.ext -copy_extensions copy
 
 ```
 
@@ -848,9 +851,29 @@ Certificate:
 
 We now have an end-entity certificate, signed with our invalid intermediate, CA signed cert, with subjectAltName set as localhost.
 
-I progressed to adding the dummyCA file into my machines truststore (no need to add screenshots here - fairly standard practice):
+Starting s_server with the new end-entity certificate `next-end-entity2.pem`
 
-![Chrome error](/img/2024-12-02-cert-error1.png){: width="972" height="589" .w-75 .normal}
+```bash
+$ openssl s_server -key next-end-entity2.key -cert next-end-entity2.pem \
+  -cert_chain end-entity.pem -accept 4433 -www
+Using default temp DH parameters
+ACCEPT
+```
 
-![Firefox error](/img/2024-12-02-cert-error2.png){: width="972" height="589" .w-75 .normal}
+I added the dummyCA file into my machines truststore (no need to add screenshots here - fairly standard practice) then connected from Chrome and Firefox to the s_server service...
 
+#### Chrome
+![Chrome error](/assets/img/2024-12-02-cert-error1.png){: width="972" height="589" .w-75 .normal}
+_Chrome error_
+
+#### Firefox
+![Firefox error](/assets/img/2024-12-02-cert-error2.png){: width="972" height="589" .w-75 .normal}
+_Firefox error_
+
+Notably, in both examples, neither browser offers the option to ignore this error and proceed anyway (perhaps indicative of how much of a mess an invalid signing certificate is).
+
+So, in answering the original question;
+
+- How do different clients behave when attempting to validate a broken certificate chain
+
+All of `openssl s_client`, Chrome and Firefox throw various errors, with the browsers not offering *ignore and proceed anyway* type behaviour by the user for this form of error.
