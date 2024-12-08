@@ -157,7 +157,7 @@ This returns:
 
 Core observation is that the issuer of the end-entity/service certificate is the subject of the next certificate up in the chain (and so on).  This subject -> issuer chain extends all the way to the root certificate in the trust store of the client.
 
-From a root certificate perspective, the way `openssl s_client` displays this isn't intuitive (it only displays the certificate bundle presented by the service, but not the root), additionally I have a suspicion that openssl is always using my machines trust store and validating the full chain, so there is no easy way to see the difference between a chain that isn't validated against a root vs. one that is, with openssl.
+From a root certificate perspective, the way `openssl s_client` displays this isn't intuitive (it only displays the certificate bundle presented by the service, but not the root), additionally I have a suspicion that openssl (`OpenSSL 3.0.13`) is always using my machines (Ubuntu) trust store and validating the full chain, so there is no easy way to see the difference between a chain that isn't validated against a root vs. one that is, with openssl.
 
 To show the similar fields from the matching root;
 
@@ -167,7 +167,7 @@ $ cat /etc/ssl/certs/ISRG_Root_X1.pem | openssl x509 -text -noout | egrep 'Issue
         Subject: C = US, O = Internet Security Research Group, CN = ISRG Root X1
 ```
 
-Clearly there is a cryptographic mechanism of signing that makes the **trust** in all this hang together, but the hierarchy is reflected in the chain of subject and issuer - joining these 2 outputs together demonstrates one answer to the first question from above - What are the observable differences between end-entity, intermediate and root certificates:
+Clearly there is a cryptographic mechanism of signing that makes the trust in all this hang together, but the hierarchy is reflected in the chain of subject and issuer - joining these 2 outputs together demonstrates one answer to the first question from above - What are the observable differences between end-entity, intermediate and root certificates:
 
 ```text
 * end entity/subject
