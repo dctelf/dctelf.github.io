@@ -19,6 +19,7 @@ At some stage, I'll cross reference these as some sort of index to other posts:
     - [ ] How do different clients behave when attempting to validate a broken certificate chain?
   - [ ] How does certificate signing work (RSA)?
   - [ ] how does certificate signing work (ECDSA)?
+  - [ ] What measures are in place to detect mis-issuance/unexpected signing of end-entity certificates both in the PKI architecture, and also by significant clients (browser vendors etc.)?
 
 
 - **mutually authenticated TLS**
