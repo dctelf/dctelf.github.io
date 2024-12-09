@@ -231,7 +231,7 @@ The full and authoritative details of these (and all the other) certificate fiel
 > I believe that, although CAs are highly likely to conform to the basic principles of setting these extension values, the client must always verify the integrity of the chain in terms of these field values.<br><br>I will go into this in a bit more detail later in this post, but this BlackHat presentation from the early 2000s ([PDF](https://www.blackhat.com/presentations/bh-dc-09/Marlinspike/BlackHat-DC-09-Marlinspike-Defeating-SSL.pdf) and [video](https://www.youtube.com/watch?v=MFol6IMbZ7Y)) touch on, in the early sections of the presentation, issues at the time emerging from clients not verifying the integrity of the extensions in the chain.
 {: .prompt-info }
 
-## what happened before these extensions were added?
+## What happened before these extensions were added?
 
 This is really hard to find out - I've spent a good few hours searching for anything that outlines the historic approach (prior to the v3 extensions) that stopped anyone who possesses a public CA signed cert from using their private key to sign a subordinate cert, effectively passing their CA signed certificate off as an intermediate.
 
