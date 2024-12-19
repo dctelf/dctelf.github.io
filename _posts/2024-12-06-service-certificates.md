@@ -234,5 +234,7 @@ Alongside these, there are other certificate attributes that form some role in c
 - OCSP information
 - CRL information
 
+So, looking back at the questions at the outset of this post, we have demonstrated the end to end model of verifying the identity of a service (to some degree of confidence - we haven't delved into the distinction between DV and EV certificates) and have also taken a look at the various extensions and attributes that play some part in the client determining validity and trust in the claimed identity.
+
 > As a footnote - having just completed this post, I've spotted that this [section](https://www.feistyduck.com/library/openssl-cookbook/online/openssl-command-line/examining-public-certificates.html) of the [openssl cookbook](https://www.feistyduck.com/library/openssl-cookbook/) (which is a free online companion to the excellent [bulletproof TLS and PKI](https://www.feistyduck.com/books/bulletproof-tls-and-pki/) book) follows a very similar outline to the summary above, giving further information on the anatomy of x509 public certificates.
 {: .prompt-info }
