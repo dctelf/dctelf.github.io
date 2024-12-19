@@ -1,5 +1,5 @@
 ---
-title: What is the end to end process that takes place when a client validates a service certificate
+title: What is the end to end process that takes place when a client validates a service certificate?
 date: 2024-12-06 18:00:00 +/-0000
 categories: [Authentication]
 tags: [x509, ca, signing, authentication]     # TAG names should always be lowercase

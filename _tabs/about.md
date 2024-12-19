@@ -16,3 +16,4 @@ Some specific references that I've found very useful;
 - [The cryptopals crypto challenges](https://cryptopals.com/)
 - [Understanding Cryptography by Christof Paar, Jan Pelzl & Tim Güneysu](https://www.cryptography-textbook.com/)
     - The related lecture series [Introduction to Cryptography by Christof Paar](https://www.youtube.com/channel/UC1usFRN4LCMcfIV7UjHNuQg)
+- badssl [github](https://github.com/chromium/badssl.com) and [certificate page](https://badssl.com/)
