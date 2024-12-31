@@ -858,7 +858,7 @@ Using default temp DH parameters
 ACCEPT
 ```
 
-I added the dummyCA file into my machines truststore (no need to add screenshots here - fairly standard practice) then connected from Chrome and Firefox to the s_server service...
+I added the dummyCA file into my OS truststore (for Chrome) and Firefox truststore then connected from Chrome and Firefox to the s_server service...
 
 #### Chrome
 ![Chrome error](/assets/img/2024-12-02-cert-error1.png){: width="972" height="589" .w-75 .normal}

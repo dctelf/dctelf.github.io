@@ -47,7 +47,7 @@ _Service authentication model_
 > I have omitted some details from this flow for simplicity - e.g. the more complex architectures of certificate authorities & registration authorities, certificate revocation mechanisms and supplemental verifications such as pinning checks etc.
 {: .prompt-info }
 
-### Certificate properties
+## Certificate properties
 
 As with the post on [intermediate certificates](/posts/what-makes-an-intermediate-certificate-intermediate/) I'll use the [wikipedia.com](https://wikipedia.com) and look at the certificate chain it presents with `openssl s_client`.
 
@@ -181,6 +181,30 @@ Note that [overview section of rfc9525](https://datatracker.ietf.org/doc/html/rf
 
 > We can see in this certificate output that the DNS form of the service identifier (wikipedia.com) is present in the subjectAltName field.  Interestingly (not something I have seen often) rfc9525 outlines the format of other service identifier types that can be held in the subjectAltName field e.g. IP addresses, an SRV name etc.
 {: .prompt-info }
+
+`Openssl s_client` can also be used, with the `-verify_hostname` option, to perform this check against the subjectAltName field.
+
+A successful verification of name would look like;
+
+```bash
+$ echo "GET /" | \
+openssl s_client -showcerts -connect www.wikipedia.com:443 \
+-verify_return_error -verify_hostname www.wikipedia.com 2>&1 | \
+egrep '^Verification|^Verified peername'
+
+Verification: OK
+Verified peername: *.wikipedia.com
+```
+And a failed verification of name would look like;
+
+```bash
+$ echo "GET /" | openssl s_client -showcerts -connect www.wikipedia.com:443 \
+-verify_return_error -verify_hostname bbc.com 2>&1 | \
+egrep '^Verification|^Verify'
+
+Verification error: hostname mismatch
+Verify return code: 62 (hostname mismatch)
+```
 
 ### Primary applicable certificate extensions
 
