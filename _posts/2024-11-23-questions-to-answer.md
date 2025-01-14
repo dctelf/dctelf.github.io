@@ -39,8 +39,13 @@ At some stage, I'll cross reference these as some sort of index to other posts:
 
 - **General crypto**
   - [ ] Cipher suite name strings are a bit unintuitive (to me) as they don't appear to be structured - how do they hang together?
+
+
+- **Asymmetric/public-key crypto core themes**
   - [ ] A simple dive into textbook RSA for both encryption and signing?
   - [ ] Why is textbook RSA problematic from a signing perspective?
   - [ ] Why is textbook RSA problematic from an encryption perspective?
   - [ ] What are the attacks on RSA?
+
+  **Symmetric ciphers and modes of operation**
   - [ ] What is authenticated encryption with associated data (AEAD)?
