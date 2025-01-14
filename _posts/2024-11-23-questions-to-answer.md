@@ -17,14 +17,10 @@ At some stage, I'll cross reference these as some sort of index to other posts:
     - [x] Can I sign any certificate with any other e.g. asking openssl to ignore these v3 extensions?
     - [x] Is enforcement ultimately a responsibility of the validating party to ensure that a non-signing certificate has not been used in a chain?
     - [x] How do different clients behave when attempting to validate a broken certificate chain?
-  - [ ] How does certificate signing work (RSA)?
+  - [x] How does certificate signing work (RSA)?
   - [ ] how does certificate signing work (ECDSA)?
   - [ ] What measures are in place to detect mis-issuance/unexpected signing of end-entity certificates both in the PKI architecture, and also by significant clients (browser vendors etc.)?
   - [ ] How does revocation work?
-
-- **Service identity & authentication**
-  - [ ] what properties of the service certificate are used to authenticate the service by the client?
-  - [ ] which certificate extensions are applicable to service authentication?
 
 - **mutually authenticated TLS**
   - [x] what are the common approaches to mTLS  & which properties of client certificates are used to identify the client?
@@ -41,6 +37,10 @@ At some stage, I'll cross reference these as some sort of index to other posts:
     - [ ] How does a service (or client) prove ownership of the private part of their certificate?
     - [ ] How intrinsically linked is private key ownership verification and key exchanging?
 
-- **Cipher suites**
+- **General crypto**
   - [ ] Cipher suite name strings are a bit unintuitive (to me) as they don't appear to be structured - how do they hang together?
-
+  - [ ] A simple dive into textbook RSA for both encryption and signing?
+  - [ ] Why is textbook RSA problematic from a signing perspective?
+  - [ ] Why is textbook RSA problematic from an encryption perspective?
+  - [ ] What are the attacks on RSA?
+  - [ ] What is authenticated encryption with associated data (AEAD)?
