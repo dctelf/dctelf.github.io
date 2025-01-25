@@ -23,7 +23,9 @@ At some stage, I'll cross reference these as some sort of index to other posts:
     - [ ] What are certificate transparency (CT) logs
   - [ ] How does revocation work?
     - [ ] What are the differences between CRLs and OCSP?
-    - [ ] What's the prevalent approach these days - are CRLs making a return.
+    - [ ] What's the prevalent approach these days - are CRLs making a return?
+    - [ ] Why are CRLs and OCSP served over unencrypted HTTP?
+    - [ ] How are CRL lists formed and validated?
 
 - **mutually authenticated TLS**
   - [x] what are the common approaches to mTLS  & which properties of client certificates are used to identify the client?
