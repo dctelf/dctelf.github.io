@@ -24,7 +24,7 @@ Certificate revocation has always felt a bit opaque to me - I'm aware that the f
 
 I spent some time looking for examples of demonstration services (e.g. the very useful [badssl](https://badssl.com/)) or certificate authorities (e.g. [Let's encrypt](https://letsencrypt.org/certificates/) ) - due to the changing prevalent approaches, the availability of revocations published in CRLs is variable - further details below.
 
-The most reliable example set of working, CA produced CRLs I could find for demonstration purposes are published by [Digicert](https://www.digicert.com/kb/digicert-root-certificates.htm) - note that I'm not advocating the use of Digicert, the value and impact of free CA's such as Let's encrypt make me sceptical of the motivations and impact on standards from for-profit CA's, but at least Digicert's demo certs are clearly published for this sort of evaluation!
+The most reliable example set of working, CA produced CRLs I could find for demonstration purposes are published by [Digicert](https://www.digicert.com/kb/digicert-root-certificates.htm) - note that I'm not advocating the use of Digicert, but their demo certs are clearly published for this sort of evaluation and have populated CRLs.
 
 I'll use the `DigiCert TLS RSA4096 Root G5` demo sites, specifically:
 
