@@ -350,7 +350,7 @@ The tools and libraries that support the creation and signing of CA certificates
 
 The approach to signing of CRLs (to ensure integrity and authenticity) is effectively identical to the approaches for signing of certificates - this approach is covered through the same RFCs as outlined in my post covering [RSA signing](/posts/rsa-x509-signing/#specification-of-the-signing-algorithm) e.g. using the same PKCS #1 V1.5 encoding.  Similarly for validation, the CRL signature can be verified against the applicable signing intermediate and ultimately CA root.
 
-### manually checking for a certificate in a CRL file
+### Manually checking for a certificate in a CRL file
 
 Checking for the presence of an end-entity certificate within a CRL entails 2 steps;
 
