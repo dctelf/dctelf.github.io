@@ -1,5 +1,5 @@
 ---
-title: What are the approaches to certificate revocation?
+title: What are the approaches to certificate revocation? - part 1
 date: 2025-01-24 18:00:00 +/-0000
 categories: [Revocation]
 tags: [x509, revocation, pki]
@@ -7,6 +7,8 @@ math: true
 ---
 
 Certificate revocation has always felt a bit opaque to me - I'm aware that the from a WebPKI perspective, browser behaviour has been varied and has not necessarily made revocation checking a reliable feature of the trust model.  I'd like to understand a bit more of the internal workings of revocation mechanisms and what the current CA and browser approach is.
+
+In this first part, I'll cover the older (but still relevant in 2025) approaches to revocation (CRLs and OCSP) - in a later second part, I'll cover some of the more recent approaches being taken by browser vendors such as CRLite, OneCRL, CRLsets etc.
 
 ## Questions to explore
 
