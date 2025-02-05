@@ -1,5 +1,5 @@
 ---
-title: What are the approaches to certificate revocation? - part 1
+title: Approaches to certificate revocation - part 1
 date: 2025-01-24 18:00:00 +/-0000
 categories: [Revocation]
 tags: [x509, revocation, pki]
