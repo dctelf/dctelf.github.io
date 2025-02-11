@@ -17,6 +17,7 @@ In this first part, I'll cover the older (but still relevant in 2025) approaches
 - What is the Online Certificate Status Protocol (OCSP)?
     - What is the request and response form for the protocol?
 - What is OCSP stapling?
+    - What about OCSP must staple
 - What's the prevalent approach these days - are CRLs making a return?
 
 
@@ -763,7 +764,23 @@ Certificate chain
 
 ```
 
+### OCSP must-staple
 
+The OCSP stapling approaches above give a mechanism to provide an updated, shorter lived status confirmation from the CA, while avoiding the privacy and resilience implications of clients querying the CA OCSP responders directly.
+
+However, this leaves a risk - some MITM could attempt to suppress the stapled response, and a client would be none the wiser - the client may request the stapled OCSP response through the `status` request, but if no response is given (and the client is unable to directly query the OCSP responder), clients are left unclear, they are unable to obtain revocation detail - do they hard fail, soft fail, ignore the situation etc.
+
+This is where [OCSP must-staple](https://blog.cloudflare.com/high-reliability-ocsp-stapling/#ocsp-must-staple) emerges - an [extension](https://datatracker.ietf.org/doc/html/rfc7633) (specifically `id-pe-tlsfeature`  although commonly referred to as *must-staple*) is added to the end-entity certificate stating that the client ***must*** receive a stapled OCSP response from the service, and if not, is expected to hard fail - effectively a statement by the service operator that they really intend to serve OCSP stapled responses, and any failure to issue one should be treated as an error.  
+
+This entails the service operator:
+
+- requiring that issued certificates (as part of their CSR) contain the relevant extension
+- ensuring that their service retrieves (and typically caches) valid & current OCSP responses from their CA
+- ensuring that their service always serves this valid & current stapled response to clients
+
+I've spent some time trying to find an example of a certificate with the must staple (let alone examples of certificates with must-staple set, but then a service not serving a stapled response) - I couldn't find any clear examples - even the cloudflare blog above, which states that [https://blog.cloudflare.com](https://blog.cloudflare.com) has must-staple set, doesn't have this extension in the certificate served today - admittedly the post is around 8 years old.
+
+There do appear to be some posts discussing approaches to widespread adoption of must-staple (e.g. [this post from Scott Helme on a softer introduction approach through `expect-staple`](https://scotthelme.co.uk/designing-a-new-security-header-expect-staple/) ) around the 2017 period, but it does seem like the broader ecosystem around OCSP (and similarly must-staple) is dying away as of late 2024/early 2025 - e.g. [https://letsencrypt.org/2024/12/05/ending-ocsp/](https://letsencrypt.org/2024/12/05/ending-ocsp/).
 
 
 ## Prevalent approach as of Jan 2025
@@ -779,9 +796,9 @@ In the process of understanding this topic, I've relied on a number of very usef
 Broadly, my observations are;
 
 - it's very hard to find a working example of a stapled & revoked certificate - none of the CA demo revoked certificate endpoints stapled (or stapled a correct) revoked OCSP response - I was hoping to see how browsers handled such a response (without setting up through my own demoCA)
-- CRLs died off some years ago, favouring OCSP... now OCSP is dying off, favouring CRLs, but using an alternate distribution mechanism to endpoints such as CRLite & CRLsets
+- CRLs died off some years ago, favouring OCSP... now OCSP is dying off, favouring some forms of CRLs, but using alternate distribution mechanisms to some (browser) endpoints such as CRLite & CRLsets
 - it's unclear how CRLite/CRLsets apply outwith the typical browser/browser engine models
 
-A key point - many of these revocation standards/protocols etc. feel like they are dancing round an a fairly obvious solution which OCSP stapling re-enforces - short lived certificates seem like answer.  
+A key point - many of these revocation standards/protocols etc. feel like they are dancing round an a fairly obvious solution which OCSP stapling conceptually re-enforces - short lived certificates seem like answer.  
 
-With OCSP stapling, services are effectively asking their CAs for a signed object, with a shorter expiry time than the *real* certificate, that declares whether the certificate remains valid or not, and offering that to clients alongside the certificate itself.Given that identity verification for issuance (which I covered in [this post](/posts/service-certificates/#the-serviceserver-identification-model)) can now be an automated, and rapidly checked process, it feels like short lived certificates will be the far simpler approach, typically avoiding the need for revocation checks at all.
+With OCSP stapling, services are effectively asking their CAs for a signed object, with a shorter expiry time than the *real* certificate, that declares whether the certificate remains valid or not, and offering that to clients alongside the certificate itself.  Given that identity verification for issuance (which I covered in [this post](/posts/service-certificates/#the-serviceserver-identification-model)) is more commonly automated, and entails online processes (instead of older approahces involving some manual human action), it feels like short lived certificates will be the far simpler approach, typically avoiding the need for much of the revocation protocols and technologies.
