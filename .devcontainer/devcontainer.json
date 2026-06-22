@@ -3,6 +3,8 @@
   "image": "mcr.microsoft.com/devcontainers/jekyll:2-bullseye",
   "onCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
   "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "bash tools/run.sh -H 0.0.0.0 &",
+  "forwardPorts": [4000],
   "customizations": {
     "vscode": {
       "settings": {
