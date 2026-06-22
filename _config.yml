@@ -14,12 +14,12 @@ timezone: Europe/London
 # jekyll-seo-tag settings › https://github.com/jekyll/jekyll-seo-tag/blob/master/docs/usage.md
 # ↓ --------------------------
 
-title: TLS, PKI & Cryptography by example # the main title
+title: dctelf.github.io # the main title
 
-tagline: understanding cryptography through examples # it will display as the subtitle
+tagline: Posts about all manner of technology things of interest. # it will display as the subtitle
 
 description: >- # used by seo meta and the atom feed
-  A set of posts that aim to explore TLS, PKI and other cryptography topics through worked examples.
+  A set of posts that aim to explore a varitey of technology topics acrosss cryptogrpahy, AI and other comp sci subjects through worked examples.
 
 # Fill in the protocol & hostname for your site.
 # E.g. 'https://username.github.io', note that it does not end with a '/'.
@@ -109,7 +109,7 @@ toc: true
 
 comments:
   # Global switch for the post-comment system. Keeping it empty means disabled.
-  provider: giscus # [disqus | utterances | giscus]
+  provider: # [disqus | utterances | giscus]
   # The provider options are as follows:
   disqus:
     shortname: # fill with the Disqus shortname. › https://help.disqus.com/en/articles/1717111-what-s-a-shortname
@@ -119,10 +119,10 @@ comments:
     issue_term: # < url | pathname | title | ...>
   # Giscus options › https://giscus.app
   giscus:
-    repo: dctelf/dctelf.github.io-comments # <gh-username>/<repo>
-    repo_id: R_kgDONqHA4g
-    category: "Announcements"
-    category_id: "DIC_kwDONqHA4s4Cl_hI"
+    repo: # dctelf/dctelf.github.io-comments # <gh-username>/<repo>
+    repo_id: # R_kgDONqHA4g
+    category: # "Announcements"
+    category_id: # "DIC_kwDONqHA4s4Cl_hI"
     mapping: # optional, default to 'pathname'
     strict: # optional, default to '0'
     input_position: # optional, default to 'bottom'
