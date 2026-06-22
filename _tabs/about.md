@@ -3,7 +3,10 @@
 icon: fas fa-info-circle
 order: 4
 ---
+* General
+Using this site to store posts on a variety of topics, mainly worked examples demonstrating technology primitives across topics like cryptography, AI, computer science & algorithms.
 
+* Cryptography topics
 As I embark on learning a bit more about cryptography, I've found it useful to write down worked examples that demonstrate some of the themes and concepts.
 
 Additionally, as I work through some of these topics, a set of additional questions have emerged that I'd like to explore further.
