@@ -5,11 +5,11 @@ categories: [PKI]
 tags: [x509, ca, signing]     # TAG names should always be lowercase
 ---
 
-Having spent a little time creating dummy CAs, signing certificates and viewing lots of `openssl x509 -text` output, I came to the realisation that I wasn't entirely clear which x509 certificate attributes I should expect to see that denote the purpose of a certificate.
+When inspecting x509 certificates, it's not always obvious which attributes denote the purpose of a certificate — whether root, intermediate, or end-entity.
 
 ## Questions to explore
 
-To further understanding, I'd like to explore the following questions and where applicable demonstrate the answers:
+This post works through the following questions, with examples where applicable:
 
 - What are the observable differences between root, intermediate, and end-entity certificates
 - The x509v3 extensions appear to restrict certificate usage, what happened before these extensions were added?
@@ -165,7 +165,7 @@ $ cat /etc/ssl/certs/ISRG_Root_X1.pem | openssl x509 -text -noout | egrep 'Issue
         Subject: C = US, O = Internet Security Research Group, CN = ISRG Root X1
 ```
 
-Clearly there is a cryptographic mechanism of signing that makes the trust in all this hang together, but the hierarchy is reflected in the chain of subject and issuer - joining these 2 outputs together demonstrates one answer to the first question from above - What are the observable differences between end-entity, intermediate and root certificates:
+The hierarchy is reflected in the chain of subject and issuer fields. Joining these two outputs answers the first question — what are the observable differences between end-entity, intermediate and root certificates:
 
 ```text
 * end entity/subject
@@ -182,11 +182,13 @@ i:C = US, O = Internet Security Research Group, CN = ISRG Root X1
 
 ```
 
+One wrinkle worth noting: an intermediate can have more than one issuer. CAs sometimes have their intermediate signed by two different roots, so that clients trusting either root can validate the chain. Let's Encrypt used this approach — see [Extending Android Device Compatibility](https://letsencrypt.org/2020/12/21/extending-android-compatibility) — to maintain compatibility with older Android devices that didn't trust the ISRG Root X1. The same E5 intermediate shown above was also signed by the older DST Root CA X3. The subject/issuer chain picture holds, but path building can involve choosing between multiple valid paths to a trusted root.
+
 ### Extension fields
 
-It also appears that the x509 v3 extensions on the certificate state what a certificate is allowed to be used for.
+The x509 v3 extensions also declare what a certificate is allowed to be used for.
 
-I manually copied the entire certificate contents for both the end entity and the intermediate (the sections between "-----BEGIN CERTIFICATE-----" and "-----END CERTIFICATE-----" in the `openssl s_client` output) into files named *end-entity* and *intermediate* for this exercise:
+I copied the PEM blocks from the `openssl s_client` output into files named *end-entity* and *intermediate*:
 
 The end entity cert;
 ```bash
@@ -228,18 +230,18 @@ This highlights the other observable difference between root, intermediate and e
 
 The full and authoritative details of these (and all the other) certificate fields is contained within [rfc5280](https://datatracker.ietf.org/doc/html/rfc5280)
 
-> I believe that, although CAs are highly likely to conform to the basic principles of setting these extension values, the client must always verify the integrity of the chain in terms of these field values.<br><br>I will go into this in a bit more detail later in this post, but this BlackHat presentation from the early 2000s ([PDF](https://www.blackhat.com/presentations/bh-dc-09/Marlinspike/BlackHat-DC-09-Marlinspike-Defeating-SSL.pdf) and [video](https://www.youtube.com/watch?v=MFol6IMbZ7Y)) touch on, in the early sections of the presentation, issues at the time emerging from clients not verifying the integrity of the extensions in the chain.
+> CAs generally conform to these extension values, but clients must always verify the chain independently. This BlackHat presentation ([PDF](https://www.blackhat.com/presentations/bh-dc-09/Marlinspike/BlackHat-DC-09-Marlinspike-Defeating-SSL.pdf) and [video](https://www.youtube.com/watch?v=MFol6IMbZ7Y)) covers issues that arose when clients failed to do so — covered further later in this post.
 {: .prompt-info }
 
 ## What happened before these extensions were added?
 
-This is really hard to find out - I've spent a good few hours searching for anything that outlines the historic approach (prior to the v3 extensions) that stopped anyone who possesses a public CA signed cert from using their private key to sign a subordinate cert, effectively passing their CA signed certificate off as an intermediate.
+I couldn't find a clear answer on what prevented this before v3 extensions — specifically, what stopped a holder of a CA-signed cert from using their private key to sign a subordinate cert and pass it off as an intermediate.
 
-Given that x509 V1 & V2 look to (almost) pre-date the advent of any significant use of SSL/TLS through the early years of the 2000s, it may be that this issue wasn't considered significant, with x509 V3 extensions being in place as SSL/TLS became prevalent.  Either way, I can't find a definitive answer, but this appears to be an issue resolved with v3 certs.
+x509 V1 & V2 largely pre-date widespread SSL/TLS use, so the issue may simply not have been considered. V3 extensions arrived as SSL/TLS became prevalent, and this appears to be an issue they resolved.
 
 ## Can I sign a certificate with another that's not intended to be a root/intermediate
 
-I'll start off by creating a dummy CA using the openssl default config.
+First, create a dummy CA using the openssl default config:
 
 ```bash
 $ cd ~/dummyCA/
@@ -321,7 +323,7 @@ Certificate:
 </details>
 
 
-Next, I'll create a CSR for the end-entity (in this example, I won't bother with an intermediate certificate).
+Next, create a CSR for the end-entity (skipping an intermediate for now):
 
 ```bash
 $ openssl req -nodes -newkey rsa:2048 -keyout end-entity.key \
@@ -386,7 +388,7 @@ Certificate Request:
 ```
 </details>
 
-Next, I'll sign with my dummyCA, using an extension file to ensure we generate a v3 certificate with the CA:FALSE basicConstraint set ...
+Next, sign with the dummyCA using an extension file to produce a v3 certificate with `CA:FALSE` basicConstraint set:
 
 ```bash
 $ cat v3.ext
@@ -481,13 +483,13 @@ depth=0: CN = end-entity (untrusted)
 depth=1: CN = dummyCA
 ```
 
-Now, in a real world scenario, we would have access to our end-entity private key and this signed end-entity certificate, but would not have access to the CA's private key (or any intermediate private keys), so let's delete our CA private key...
+In a real scenario, we'd have our end-entity private key and signed end-entity certificate, but not the CA's private key (or any intermediate private keys).  To simulate this, delete it:
 
 ```bash
 $ rm dummyCA.key
 ```
 
-Next, let's create a *fake* end-entity certificate, i.e. one we will aim to sign with out CA signed end-entity certificate.
+Next, create a *fake* end-entity certificate — one we'll attempt to sign with our CA-signed end-entity certificate:
 
 ```bash
 $ openssl req -nodes -newkey rsa:2048 -keyout next-end-entity.key \
@@ -553,7 +555,7 @@ Certificate Request:
 
 </details>
 
-Next, I'll make an attempt to sign this certificate, but I'll try to use my CA signed cert as the CA (this has "CA:FALSE" set, so will be interesting to see what openssl does) - I'll use the same v3.ext as above...
+Next, attempt to sign using the CA-signed end-entity cert as the CA — it has `CA:FALSE` set, so it will be interesting to see how openssl responds. Using the same v3.ext as above:
 
 ```bash
 $ openssl x509 -req -in next-end-entity.csr -CA end-entity.pem -CAkey end-entity.key \
@@ -562,7 +564,7 @@ Certificate request self-signature ok
 subject=CN = end-entity
 ```
 
-I was expecting openssl to put up more of a fight here (e.g. some warning or error), but this looks to have signed fine, disregarding the CA:FALSE value.
+openssl signs without complaint, warning or error - disregarding the `CA:FALSE` value.
 
 ```bash
 $ openssl x509 -in next-end-entity.pem -noout -text | egrep '^\s+Issuer:|^\s+Subject:'
@@ -654,17 +656,17 @@ error 32 at 1 depth lookup: key usage does not include certificate signing
 error next-end-entity.pem: verification failed
 ```
 
-So, in answering the original question;
+To answer the original question:
 
 - Can I sign a certificate with another that's not intended to be a root/intermediate e.g. asking openssl to ignore these v3 extensions?
 
-Yes - I can use openssl to sign a certificate with another signed certificate that has CA:FALSE set in it's extensions, and I didn't have to ask openssl to ignore anything, it signed without question.  I'm curious if there are additional extensions that might create different behaviour, so in future I might generate a CA signed cert (from let's encrypt or similar) to check if the behaviour is the same.
+Yes — openssl signs a certificate using another with `CA:FALSE` set, without needing any flag to override it. It may be worth testing whether other extension combinations produce different behaviour, but I assume not.
 
 ## Is enforcement ultimately a responsibility of the validating party
 
-Having worked through these examples above, and given that no other party plays a part when taking an already signed certificate and using it to sign a subordinate, it is apparent that ultimate responsibility lies with the client to verify that various aspects of a certificate chain meet the expected/required characteristics, and that errors should be thrown where an issue is encountered.
+As no other party is involved when using a signed certificate to sign a subordinate, the client bears ultimate responsibility for verifying that a certificate chain meets the required characteristics and rejecting it if not.
 
-There may be other features of the public PKI architecture which may also play a role in identifying certificates for domains not signed by expected parties (for now I'm guessing some elements of pinning or CT logs) - I'll attempt to explore this in a later post and may come back to this topic.
+Other features of the public PKI architecture may also help identify certificates signed by unexpected parties — certificate pinning and CT logs being likely candidates — to be explored in a later post.
 
 ## How do different clients behave when attempting to validate a broken certificate chain 
 
@@ -691,12 +693,12 @@ Verification error: key usage does not include certificate signing
 
 Clearly, verification errors are identified.
 
-I'll try with Chrome next, although this is a little more involved - I need to address 2 things to ensure I only see the errors caused by the certificate chain signing anomaly, rather than other unrelated errors:
+Testing with Chrome requires two setup steps to isolate errors caused by the invalid chain, rather than other unrelated issues:
 
-1. I'll need to create a new *next-end-entity* certificate that has the subjectAltName field set with `localhost`
-2. I'll need to install my dummyCA root in my truststore
+1. Create a new *next-end-entity* certificate with `localhost` in the subjectAltName field
+2. Install the dummyCA root in the local truststore
 
-For this first item I'll go back and create a new *next-end-entity* certificate for *next-end-entity2* with the subjectAltName field added...
+For the first step, create a new CSR for *next-end-entity2* with the subjectAltName field:
 
 ```bash
 $ openssl req -nodes -newkey rsa:2048 -keyout next-end-entity2.key \
@@ -764,7 +766,7 @@ Certificate Request:
 
 </details>
 
-Next, I'll  sign this certificate using my CA signed cert as the CA - I'll use the same v3.ext as above but ask to copy the CSR extensions to bring in the subjectAltName field...
+Next, sign using the CA-signed cert as the CA, with the same v3.ext as above and `-copy_extensions copy` to bring in the subjectAltName field:
 
 ```bash
 $ openssl x509 -req -in next-end-entity2.csr -CA end-entity.pem -CAkey end-entity.key \
@@ -847,9 +849,9 @@ Certificate:
 
 </details>
 
-We now have an end-entity certificate, signed with our invalid intermediate, CA signed cert, with subjectAltName set as localhost.
+This gives an end-entity certificate signed by the invalid intermediate CA-signed cert, with `localhost` in the subjectAltName field.
 
-Starting s_server with the new end-entity certificate `next-end-entity2.pem`
+Start s_server with the new end-entity certificate `next-end-entity2.pem`:
 
 ```bash
 $ openssl s_server -key next-end-entity2.key -cert next-end-entity2.pem \
@@ -858,7 +860,7 @@ Using default temp DH parameters
 ACCEPT
 ```
 
-I added the dummyCA file into my OS truststore (for Chrome) and Firefox truststore then connected from Chrome and Firefox to the s_server service...
+With the dummyCA root added to the OS truststore (for Chrome) and the Firefox truststore, connecting from both browsers gives:
 
 #### Chrome
 ![Chrome error](/assets/img/2024-12-02-cert-error1.png){: width="972" height="589" .w-75 .normal}
@@ -868,10 +870,14 @@ _Chrome error_
 ![Firefox error](/assets/img/2024-12-02-cert-error2.png){: width="972" height="589" .w-75 .normal}
 _Firefox error_
 
-Notably, in both examples, neither browser offers the option to ignore this error and proceed anyway (perhaps indicative of how much of a mess an invalid signing certificate is).
+Neither browser offers the option to ignore the error and proceed — unlike some certificate errors, there is no bypass for this one.
 
-So, in answering the original question;
+To answer the original question:
 
 - How do different clients behave when attempting to validate a broken certificate chain
 
-All of `openssl s_client`, Chrome and Firefox throw various errors, with the browsers not offering *ignore and proceed anyway* type behaviour by the user for this form of error.
+`openssl s_client`, Chrome and Firefox all throw errors, and neither browser offers a way to bypass them.
+
+## Summary
+
+The observable differences between certificate types come down to two things: the subject/issuer chain (roots are self-signed, intermediates bridge root to end-entity) and the v3 extension fields (`CA:TRUE`/`FALSE`, `Certificate Sign`, `pathlen`). The extensions are the mechanism that *should* enforce these roles, but as the signing experiment shows, openssl doesn't enforce them at signing time — enforcement is the client's responsibility at validation time, which the verify and browser tests confirm. What came before v3 extensions isn't well documented, but the problem appears to have simply not been addressed until SSL/TLS made it relevant.
