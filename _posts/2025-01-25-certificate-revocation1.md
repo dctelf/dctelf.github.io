@@ -6,9 +6,9 @@ tags: [x509, revocation, pki]
 math: true
 ---
 
-Certificate revocation has always felt a bit opaque to me - I'm aware that the from a WebPKI perspective, browser behaviour has been varied and has not necessarily made revocation checking a reliable feature of the trust model.  I'd like to understand a bit more of the internal workings of revocation mechanisms and what the current CA and browser approach is.
+Certificate revocation has always been opaque to me — from a WebPKI perspective, browser behaviour has varied and has not made revocation checking a reliable feature of the trust model. This post explores the internal workings of revocation mechanisms and the current CA and browser approach.
 
-In this first part, I'll cover the older (but still relevant in 2025) approaches to revocation (CRLs and OCSP) - in a later second part, I'll cover some of the more recent approaches being taken by browser vendors such as CRLite, OneCRL, CRLsets etc.
+Part 1 covers the older (but still relevant) approaches — CRLs and OCSP. Part 2 covers the more recent approaches taken by browser vendors: CRLite, OneCRL, CRLsets and others.
 
 ## Questions to explore
 
@@ -290,7 +290,7 @@ Verification: OK
 
 [RFC5280](https://datatracker.ietf.org/doc/html/rfc5280) covers the definition of the structure of both certificates and certificate revocation lists.
 
-From the standard, the shape of CRLs is very similar to that of x509 certificates, with ASN.1 structures and encoding options through DER and PEM.  It does look like the default form of the file obtainable through the CRL distribution point URIs is DER.
+CRLs share the same shape as x509 certificates — ASN.1 structures with DER and PEM encoding. The default form obtained from CRL distribution point URIs is DER.
 
 `openssl crl -text` can be used in a similar fashion to `openssl x509 -text` to display the content of the CRL in a human readable form:
 
@@ -499,9 +499,9 @@ end-entity.pem: revoked
         Reason: superseded
         Revocation Time: Jan  6 15:52:07 2025 GMT
 ```
-RFC6090 describes the purpose of these request fields, and they are broadly self explanatory (e.g. the use of an optional [nonce](https://datatracker.ietf.org/doc/html/rfc6960#section-4.4.1) value to prevent replay attacks, declaring the hash algorithm to be used, and the serial number of the certificate in question).
+RFC6960 describes the purpose of these request fields, and they are broadly self explanatory (e.g. the use of an optional [nonce](https://datatracker.ietf.org/doc/html/rfc6960#section-4.4.1) value to prevent replay attacks, declaring the hash algorithm to be used, and the serial number of the certificate in question).
 
-The only values passed that are not immediately clear on their purpose are the issuer attributes - [RFC6090 section 4.1.2](https://datatracker.ietf.org/doc/html/rfc6960#section-4.1.2) describes why a hash of both the issuer name **and** issuer key is passed, but it's not immediately obvious why any attributes of the issuer are required in the first place.  The rfc offers an option to [delegate](https://datatracker.ietf.org/doc/html/rfc6960#section-2.6) OCSP signature authority to a different CA, so this isn't some attempt to bind the OCSP signer to the certificate signer.  Having done some reading, the only purpose I can see in passing this information is to allow the OCSP responder to uniquely identify the certificate in question within it's certificate status database - serial numbers of certificates for a particular CA (that is, root certificate) must be unique, but OCSP responders can serve responses for multiple CAs, roots & intermediates.  By passing the issuer name/serial number hash in the request, the OCSP responder can unambiguously identify the unique certificate in question.
+The only values passed that are not immediately clear on their purpose are the issuer attributes - [RFC6960 section 4.1.2](https://datatracker.ietf.org/doc/html/rfc6960#section-4.1.2) describes why a hash of both the issuer name **and** issuer key is passed, but it's not immediately obvious why any attributes of the issuer are required in the first place.  The rfc offers an option to [delegate](https://datatracker.ietf.org/doc/html/rfc6960#section-2.6) OCSP signature authority to a different CA, so this isn't some attempt to bind the OCSP signer to the certificate signer.  Having done some reading, the only purpose I can see in passing this information is to allow the OCSP responder to uniquely identify the certificate in question within it's certificate status database - serial numbers of certificates for a particular CA (that is, root certificate) must be unique, but OCSP responders can serve responses for multiple CAs, roots & intermediates.  By passing the issuer name/serial number hash in the request, the OCSP responder can unambiguously identify the unique certificate in question.
 
 ### OCSP response structure
 
@@ -571,7 +571,7 @@ end-entity.pem: revoked
 
 ## OCSP stapling
 
-OCSP stapling removed the need for the client to interact with any other party out-with the service which is presenting the certificate in the first place - this removes the privacy concerns inherent OCSP - effectively by a client interacting with an OCSP responder, the client is sharing a full trail of all the services it has connected to with a CA or their delegated OCSP responder providers.
+OCSP stapling removes the need for the client to interact with any party beyond the service presenting the certificate — removing the privacy concerns inherent in OCSP - effectively by a client interacting with an OCSP responder, the client is sharing a full trail of all the services it has connected to with a CA or their delegated OCSP responder providers.
 
 In TLS, this is achieved through the service passing on the (CA signed) OCSP response as part of the initial certificate response from service to client - the mechanism has changed slightly between TLS 1.2 (where the mechanism is described in [rfc6961](https://datatracker.ietf.org/doc/html/rfc6961)) and TLS 1.3 where the mechanism is described in the overarching TLS [rfc8446 - section 4.4.2.1](https://datatracker.ietf.org/doc/html/rfc8446#section-4.4.2.1).  The status response cannot be forged by the intermediate in this model, as the OCSP response is signed by the CA, which the client can validate.
 
@@ -648,13 +648,13 @@ $ openssl x509 -in badssl_revoked_end-entity.pem -issuer -noout
 issuer=C = US, O = Let's Encrypt, CN = E6
 ```
 
-Currently, Let's Encrypt's approach is that they:
+At the time of writing (early 2025), Let's Encrypt's approach was that they:
 
 - don't publish revoked certificates in CRLs
 - publish revocation information on OCSP endpoints
 - support the use of stapling/the "must staple" extension
 
-This is all in a [state of change](https://letsencrypt.org/2024/12/05/ending-ocsp/) at the time of writing but for now, the current approach holds.
+**Update (2025/2026):** This has since changed. Let's Encrypt stopped including OCSP endpoints in new certificates from early 2025 and will shut down their OCSP responder entirely in August 2026. The examples above describe an approach that no longer applies to Let's Encrypt issued certificates — the [Let's Encrypt announcement](https://letsencrypt.org/2024/12/05/ending-ocsp/) outlines the rationale and timeline.
 
 Although stapling *could* be used for this badssl demo certificate, the service does not provide a stapled OCSP response when called - I don't believe there are currently any OCSP/CA related technical impediments, but implementation of stapling is a choice of the service provider.
 
@@ -782,6 +782,14 @@ I've spent some time trying to find an example of a certificate with the must st
 
 There do appear to be some posts discussing approaches to widespread adoption of must-staple (e.g. [this post from Scott Helme on a softer introduction approach through `expect-staple`](https://scotthelme.co.uk/designing-a-new-security-header-expect-staple/) ) around the 2017 period, but it does seem like the broader ecosystem around OCSP (and similarly must-staple) is dying away as of late 2024/early 2025 - e.g. [https://letsencrypt.org/2024/12/05/ending-ocsp/](https://letsencrypt.org/2024/12/05/ending-ocsp/).
 
+## Summary
+
+- CRLs are CA-signed lists of revoked certificate serial numbers, distributed via URLs embedded in the `crlDistributionPoints` certificate extension. Clients must download, verify the CRL signature, and search for the certificate serial number — a process complicated by the potentially large size of CRL files.
+- OCSP provides per-certificate revocation status via a CA-operated responder, returning a signed response. It improves on CRLs for timeliness but introduces privacy concerns (the CA learns which services a client connects to) and a reliability dependency on the CA's infrastructure.
+- OCSP stapling moves the OCSP query from client to service: the service periodically fetches and caches the signed OCSP response and serves it alongside the certificate, avoiding the privacy and reliability problems of direct client queries.
+- OCSP must-staple adds an extension to the certificate asserting that clients must receive a stapled OCSP response — any failure to provide one should be treated as an error rather than silently ignored.
+- Neither CRL nor OCSP has proven fully reliable in practice. Browsers have moved toward vendor-managed distribution of revocation data, covered in part 2. The underlying challenge is that all revocation mechanisms are attempts to shorten the window between a certificate being compromised and clients learning about it in advance of the certificate expiring.
+
 
 ## Prevalent approach as of Jan 2025
 
@@ -799,6 +807,6 @@ Broadly, my observations are;
 - CRLs died off some years ago, favouring OCSP... now OCSP is dying off, favouring some forms of CRLs, but using alternate distribution mechanisms to some (browser) endpoints such as CRLite & CRLsets
 - it's unclear how CRLite/CRLsets apply outwith the typical browser/browser engine models
 
-A key point - many of these revocation standards/protocols etc. feel like they are dancing round an a fairly obvious solution which OCSP stapling conceptually re-enforces - short lived certificates seem like answer.  
+A key point - many of these revocation standards/protocols etc. feel like they are dancing around a fairly obvious solution which OCSP stapling conceptually re-enforces - short lived certificates seem like answer.  
 
 With OCSP stapling, services are effectively asking their CAs for a signed object, with a shorter expiry time than the *real* certificate, that declares whether the certificate remains valid or not, and offering that to clients alongside the certificate itself.  Given that identity verification for issuance (which I covered in [this post](/posts/service-certificates/#the-serviceserver-identification-model)) is more commonly automated, and entails online processes (instead of older approaches involving some manual human action), it feels like short lived certificates will be the far simpler approach, typically avoiding the need for much of the revocation protocols and technologies.
