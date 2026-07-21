@@ -1,14 +1,14 @@
 ---
 title: "How does TLS prove private key possession?"
-date: 2026-08-17
+date: 2026-07-17
 categories: []
 tags: []
 math: true
 ---
 
-I thought it worth exploring how TLS provides mechanisms to prove to the client (or service in the mTLS context) that the service holds the private key matching the pubilc key within the certificate.  
+I thought it worth exploring how TLS provides mechanisms to prove to the client (or service in the mTLS context) that the service holds the private key matching the public key within the certificate.  
 
-This is a fundamental aspect of PKI - wihout this capabiilty, any service could take a copy of the certificate and pass off as the service - this would undermine the authentication aspects of TLS.
+This is a fundamental aspect of asymmetric cryptography - without this capabiilty, anyone could take a copy of the public certificate and pass off as the service - this would undermine the authentication aspects of TLS.
 
 ## Questions to explore
 
@@ -279,6 +279,10 @@ From the client side (truncating the output) we can see the contents of the cert
     18 d6 a0 f0 cb 3d a4 d1
 ~~~
 ```
+
+> I had assumed that this part of the handshake would be visible from a packet capture however, on review of some pcaps, it was apparent that the CertificateVerify message (along with the contents of the presented certificate) weren't clearly visible - but were visible in a TLS 1.2 handshake.  After some reading I know understand that TLS 1.3 introduced a significant change in the transmission of handshake contents - in TLS 1.2, the contents of the CertificateVerify message (along with other parts of the handshake, such as the service certificate) were transmitted in the clear.<br /><br />TLS 1.3 was designed to encrypt more of the handshake message (see [slide 4 of the TLS 1.3 wishlist from Eric Rescorla at IETF 87](https://www.ietf.org/proceedings/87/slides/slides-87-tls-5.pdf) and some of the clouflare blog summaries [here](https://blog.cloudflare.com/encrypted-client-hello/#handshake-encryption-in-tls) and [here](https://blog.cloudflare.com/rfc-8446-aka-tls-1-3/) ) - the core purpose is for privacy purposes as sharing the certificate(s) alongside other elements of the handshake in the clear exposes a variety of identity and connection context that introduces a variety of risks.<br /><br />As a side note, this remains a problem beyond the TLS handshake due to SNI - [this post](https://blog.cloudflare.com/encrypted-client-hello/#background) gives a summary, alongside the mitigation through adoption of Encrypted Client Hello (ECH).
+{: .prompt-info }
+
 ## What CertificateVerify signs
 
 ## Why the transcript, not a nonce
