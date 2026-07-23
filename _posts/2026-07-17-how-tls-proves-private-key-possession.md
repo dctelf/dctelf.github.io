@@ -285,6 +285,10 @@ From the client side (truncating the output) we can see the contents of the cert
 
 ## What CertificateVerify signs
 
+For an RSA signed certificate, to prove that the server possesses the private key, the client and the server must agree a set of data already shared between both parties that the server will apply some encoding scheme, then sign with the private key - the client can then verify this by taking the signature, raising to the power of the public key (modulo N) and then performing the inverse of the encoding scheme utilising the shared data to determine whether the siganuture was valid.  Only (or rather, with an extremely high probabibility) by being in posession of the private key can the server generate such a valid signature.  This previous [post](/posts/rsa-x509-signing/) demonstrates the equivalent RSA signature verificaiton process as used when verifying a certificate chain signature under the PKCS#1 v1.5 encoding scheme - TLS 1.3 .
+
+
+
 ## Why the transcript, not a nonce
 
 ## The input structure: padding, context string, and transcript hash
